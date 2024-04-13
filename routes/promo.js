@@ -1,9 +1,7 @@
-import { router } from "../lib/router.js";
-
-export const render = ({ states, serverStates, routeParams } = {}) => {
+export const render = ({ serverStates, router } = {}) => {
   return `
     <div id="promo-page">
-      <h1>Promo ${routeParams?.slug ?? ""}</h1>
+      <h1>Promo ${router?.params?.slug ?? ""}</h1>
       <p>${serverStates?.promoDetails ?? ""}</p>
     </div>
   `;

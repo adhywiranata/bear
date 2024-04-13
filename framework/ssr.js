@@ -1,5 +1,5 @@
-import { SSR_PERSISTOR_SCRIPT_ID } from "./framework/constants.js";
-import { resolveRoute } from "./lib/router.js";
+import { SSR_PERSISTOR_SCRIPT_ID } from "./constants.js";
+import { resolveRoute } from "./routeHandler.js";
 
 export const getStringifiedApp = (path) => {
   const resolver = resolveRoute(path) || {};

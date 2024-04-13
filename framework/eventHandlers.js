@@ -1,12 +1,16 @@
 const CLICK_MATCHER = "b-click";
 
-export const resolveInternalHandlers = (
+import { routerActions } from "./routerActions.js";
+
+export const resolveInternalHandlers = ({
   domToAttach,
   handlers,
   states,
-  store
-) => {
+  store,
+  router,
+}) => {
   if (handlers) {
+    const enhancedRouter = { ...router, ...routerActions };
     const clickables = domToAttach.querySelectorAll(`[${CLICK_MATCHER}]`);
 
     clickables.forEach((clickable) => {
@@ -14,13 +18,13 @@ export const resolveInternalHandlers = (
 
       if (handlerKey && typeof handlers[handlerKey] === "function") {
         clickable.addEventListener("click", () => {
-          handlers[handlerKey](states, store);
+          handlers[handlerKey]({ states, store, router: enhancedRouter });
         });
       }
     });
 
     if (typeof handlers.onMounted === "function") {
-      handlers.onMounted(states, store);
+      handlers.onMounted({ states, store, router: enhancedRouter });
     }
   }
 };

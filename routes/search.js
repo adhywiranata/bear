@@ -1,13 +1,11 @@
-import { router } from "../lib/router.js";
-
-export const render = ({ states, routeParams }) => {
+export const render = ({ router }) => {
   return `
     <div id="search-page">
       <h2>Search Page</h2>
       ${
-        routeParams?.query?.q
+        router?.query?.q
           ? `<div style="margin-top: 10px;">
-        Search Results for <strong>${routeParams?.query?.q}</strong>
+        Search Results for <strong>${router?.query?.q}</strong>
       </div>`
           : ""
       }

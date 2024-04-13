@@ -1,26 +1,30 @@
-import { resolveInternalHandlers } from "../framework/eventHandlers.js";
+import { resolveInternalHandlers } from "./eventHandlers.js";
 
-import { hydrateToStateful } from "../framework/hydrate.js";
+import { hydrateToStateful } from "./hydrate.js";
 
 import { routes } from "../routes/index.js";
 import {
   render as renderHeader,
   handlers as HeaderHandlers,
 } from "../components/header.js";
-import { GLOBAL_STORE_EVENT_SUBSCRIBER_NAME } from "../framework/constants.js";
 
-function makeid(length) {
+import {
+  GLOBAL_STORE_EVENT_SUBSCRIBER_NAME,
+  ROUTER_RENDER_SUBCRIBER_NAME,
+} from "./constants.js";
+
+const generateUniqueStateId = () => {
   let result = "";
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   const charactersLength = characters.length;
   let counter = 0;
-  while (counter < length) {
+  while (counter < 12) {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
     counter += 1;
   }
   return result;
-}
+};
 
 const renderPage = (
   resolverWithoutStates,
@@ -28,49 +32,50 @@ const renderPage = (
   globalStates = {},
   mountNode = null
 ) => {
-  const { path = "/", render, handlers, routeParams } = resolverWithoutStates;
+  const { path = "/", render, handlers, router } = resolverWithoutStates;
 
   // render method. trim is required to avoid whitespaces during templating
-  const routeToRender = hydrateToStateful(
-    render,
+  const routeToRender = hydrateToStateful({
+    renderer: render,
     states,
-    globalStates,
-    routeParams
-  ).trim();
-  const ggId = makeid(12) + path.split("/").join("-");
+    store: globalStates,
+    router,
+  }).trim();
+  const brbn = generateUniqueStateId() + path.split("/").join("-");
 
-  const layoutToRender = hydrateToStateful(
-    renderHeader,
-    {},
-    globalStates
-  ).trim();
+  const layoutToRender = hydrateToStateful({
+    renderer: renderHeader,
+    states,
+    store: globalStates,
+    router,
+  }).trim();
 
   mountNode.innerHTML =
-    layoutToRender + `<g-g id=${ggId}></g-g>` + routeToRender;
+    layoutToRender + `<br-bn id=${brbn}></br-bn>` + routeToRender;
 
   const layoutElem = document.querySelector("header");
-  resolveInternalHandlers(
-    layoutElem,
-    HeaderHandlers,
+  resolveInternalHandlers({
+    domToAttach: layoutElem,
+    handlers: HeaderHandlers,
     states,
-    globalStates,
-    routeParams
-  );
+    store: globalStates,
+    router,
+  });
 
   // attach handlers to rendered html
-  const ggTag = document.getElementById(ggId);
+  const ggTag = document.getElementById(brbn);
 
   if (ggTag) {
     const targetElem = ggTag.nextSibling;
-    resolveInternalHandlers(
-      targetElem,
+    resolveInternalHandlers({
+      domToAttach: targetElem,
       handlers,
       states,
-      globalStates,
-      routeParams
-    );
+      store: globalStates,
+      router,
+    });
   } else {
-    console.error(`[Framework Error] no element found for ${ggId}`);
+    console.error(`[Framework Error] no element found for ${brbn}`);
   }
 };
 
@@ -113,17 +118,37 @@ const renderRoute = (resolver) => {
   );
 };
 
-const sanitizedPathFromQueryStrings = (urlWithQS) => {
-  return urlWithQS.split("?")[0];
+const sanitizeRouterPath = (urlWithQSAndHash) => {
+  const cleanedFromQS = urlWithQSAndHash.split("?")[0];
+  const cleanedFromHash = cleanedFromQS.split("#")[0];
+  return cleanedFromHash;
+};
+
+// { #hashKeyName: value } => { hashKeyName: value }
+const sanitizeHashKeyFromHashMap = (obj) => {
+  return Object.keys(obj).reduce((curr, v) => {
+    return {
+      ...curr,
+      [v.slice(1)]: obj[v],
+    };
+  }, {});
 };
 
 export const resolveRoute = (currentPathToResolve) => {
   let initialResolver = undefined;
+
+  const routerPath = currentPathToResolve;
   let searchQuery = undefined;
+  let searchHash = undefined;
 
   if (currentPathToResolve.includes("?")) {
     searchQuery = Object.fromEntries(
       new URLSearchParams(currentPathToResolve.split("?")[1])
+    );
+    searchHash = sanitizeHashKeyFromHashMap(
+      Object.fromEntries(
+        new URLSearchParams(currentPathToResolve.split("#")[1])
+      )
     );
   }
 
@@ -131,12 +156,24 @@ export const resolveRoute = (currentPathToResolve) => {
     searchQuery = Object.fromEntries(
       new URLSearchParams(window.location.search)
     );
+    searchHash = sanitizeHashKeyFromHashMap(
+      Object.fromEntries(new URLSearchParams(window.location.hash))
+    );
   }
+
+  const routerSignature = {
+    path: routerPath,
+    query: searchQuery,
+    hash: searchHash,
+  };
 
   routes.forEach((route) => {
     // if path are as easy as exacts
-    if (route.path === sanitizedPathFromQueryStrings(currentPathToResolve)) {
-      initialResolver = { ...route, routeParams: { query: searchQuery } };
+    if (route.path === sanitizeRouterPath(currentPathToResolve)) {
+      initialResolver = {
+        ...route,
+        router: routerSignature,
+      };
       return;
     }
 
@@ -178,7 +215,10 @@ export const resolveRoute = (currentPathToResolve) => {
       if (currentPathToResolve.startsWith(trailingPath)) {
         initialResolver = {
           ...route,
-          routeParams: { ...paramsMap, query: searchQuery },
+          router: {
+            params: { ...paramsMap },
+            ...routerSignature,
+          },
         };
       }
     }
@@ -193,25 +233,13 @@ export const initRouter = () => {
 
   renderRoute(resolveRoute(path));
 
-  window.addEventListener("popstate", (event) => {
+  window.addEventListener("popstate", () => {
     const path = window.location.pathname;
 
     renderRoute(resolveRoute(path));
   });
-};
 
-export const router = {
-  push: (path) => {
-    window.history.pushState({}, "", path);
-
-    renderRoute(resolveRoute(path));
-  },
-  replace: (path) => {
-    window.history.replaceState({}, "", path);
-
-    renderRoute(resolveRoute(path));
-  },
-  back: () => {
-    window.history.back();
-  },
+  window.addEventListener(ROUTER_RENDER_SUBCRIBER_NAME, (event) => {
+    renderRoute(resolveRoute(event.detail.path));
+  });
 };

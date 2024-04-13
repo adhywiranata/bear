@@ -1,5 +1,3 @@
-import { router } from "../lib/router.js";
-
 export const render = () => {
   return `
     <div id="login-page">
@@ -16,7 +14,7 @@ export const render = () => {
 };
 
 export const handlers = {
-  onMounted: (_, store) => {
+  onMounted: ({ store, router }) => {
     document.querySelector("#login").addEventListener("submit", (evt) => {
       evt.preventDefault();
       store.username = "Kuma";

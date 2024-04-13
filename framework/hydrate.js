@@ -2,7 +2,7 @@ import { SSR_PERSISTOR_SCRIPT_ID } from "./constants.js";
 
 export const resolveHandlebars = (s) => s.match(/\{\{([^{}]+)\}\}/g);
 
-export const hydrateToStateful = (renderer, states, store, routeParams) => {
+export const hydrateToStateful = ({ renderer, states, store, router }) => {
   const replacableMatchers = [];
 
   let serverStates = undefined;
@@ -13,7 +13,7 @@ export const hydrateToStateful = (renderer, states, store, routeParams) => {
     );
   } catch (err) {}
 
-  let htmlString = renderer({ states, store, routeParams, serverStates });
+  let htmlString = renderer({ states, store, router, serverStates });
   const matchers = resolveHandlebars(htmlString);
 
   const storeStatesKeys = Object.keys(store).map((gs) => `store.${gs}`);

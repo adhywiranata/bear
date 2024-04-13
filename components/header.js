@@ -1,6 +1,4 @@
-import { router } from "../lib/router.js";
-
-export const render = ({ states, store }) => {
+export const render = ({ store, router }) => {
   return `
     <header style="width: 100vw; height: 50px; padding: 10px 20px; display: flex; background: #3a539b; color: white;">
       <div style="cursor: pointer; width: 100vw; display: flex; justify-content: space-between; margin: 0 auto; align-items: center;">
@@ -24,17 +22,17 @@ export const render = ({ states, store }) => {
 };
 
 export const handlers = {
-  home: () => {
+  home: ({ router }) => {
     router.push("/");
   },
-  login: () => {
+  login: ({ router }) => {
     router.push("/login");
   },
-  logout: (_, store) => {
+  logout: ({ store, router }) => {
     store.username = undefined;
     router.push("/");
   },
-  onMounted: () => {
+  onMounted: ({ router }) => {
     const searchForm = document.querySelector("#search-form");
 
     searchForm.addEventListener("submit", (event) => {
