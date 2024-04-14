@@ -1,5 +1,8 @@
-import { initApp } from "./framework/initializers.js";
+import { initApp } from "./framework/init.js";
 
 initApp({
-  username: undefined,
+  mountNode: "main",
+  initialStore: {
+    username: undefined,
+  },
 });

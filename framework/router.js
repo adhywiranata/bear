@@ -1,122 +1,10 @@
-import { resolveInternalHandlers } from "./eventHandlers.js";
-
-import { hydrateToStateful } from "./hydrate.js";
-
 import { routes } from "../routes/index.js";
-import {
-  render as renderHeader,
-  handlers as HeaderHandlers,
-} from "../components/header.js";
 
 import {
-  GLOBAL_STORE_EVENT_SUBSCRIBER_NAME,
+  STORE_EVENT_SUBSCRIBER_NAME,
   ROUTER_RENDER_SUBCRIBER_NAME,
 } from "./constants.js";
-
-const generateUniqueStateId = () => {
-  let result = "";
-  const characters =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const charactersLength = characters.length;
-  let counter = 0;
-  while (counter < 12) {
-    result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    counter += 1;
-  }
-  return result;
-};
-
-const renderPage = (
-  resolverWithoutStates,
-  states = {},
-  globalStates = {},
-  mountNode = null
-) => {
-  const { path = "/", render, handlers, router } = resolverWithoutStates;
-
-  // render method. trim is required to avoid whitespaces during templating
-  const routeToRender = hydrateToStateful({
-    renderer: render,
-    states,
-    store: globalStates,
-    router,
-  }).trim();
-  const brbn = generateUniqueStateId() + path.split("/").join("-");
-
-  const layoutToRender = hydrateToStateful({
-    renderer: renderHeader,
-    states,
-    store: globalStates,
-    router,
-  }).trim();
-
-  mountNode.innerHTML =
-    layoutToRender + `<br-bn id=${brbn}></br-bn>` + routeToRender;
-
-  const layoutElem = document.querySelector("header");
-  resolveInternalHandlers({
-    domToAttach: layoutElem,
-    handlers: HeaderHandlers,
-    states,
-    store: globalStates,
-    router,
-  });
-
-  // attach handlers to rendered html
-  const ggTag = document.getElementById(brbn);
-
-  if (ggTag) {
-    const targetElem = ggTag.nextSibling;
-    resolveInternalHandlers({
-      domToAttach: targetElem,
-      handlers,
-      states,
-      store: globalStates,
-      router,
-    });
-  } else {
-    console.error(`[Framework Error] no element found for ${brbn}`);
-  }
-};
-
-const renderRoute = (resolver) => {
-  const root = document.querySelector("main");
-
-  const { states = {}, ...restResolver } = resolver || {};
-  const globalStates = window.__BRBN_STORE;
-
-  // route-level state
-  const proxiedRouteStates = new Proxy(structuredClone(states), {
-    set: (obj, prop, value) => {
-      const prevValue = obj[prop];
-
-      obj[prop] = value;
-
-      if (prevValue !== value) {
-        renderPage(restResolver, proxiedRouteStates, globalStates, root);
-      }
-      return true;
-    },
-  });
-
-  // modifying global state
-  window.addEventListener(GLOBAL_STORE_EVENT_SUBSCRIBER_NAME, (event) => {
-    renderPage(restResolver, proxiedRouteStates, globalStates, root);
-  });
-
-  if (typeof resolver === "object") {
-    renderPage(restResolver, proxiedRouteStates, globalStates, root);
-
-    return;
-  }
-
-  renderPage(
-    { render: () => `<div><h1>404</h1></div>` },
-    proxiedRouteStates,
-    globalStates,
-    root
-  );
-};
+import { renderPage } from "./renderer.js";
 
 const sanitizeRouterPath = (urlWithQSAndHash) => {
   const cleanedFromQS = urlWithQSAndHash.split("?")[0];
@@ -227,19 +115,80 @@ export const resolveRoute = (currentPathToResolve) => {
   return initialResolver;
 };
 
-export const initRouter = () => {
+const renderRoute = (initialResolver, mountNode) => {
+  const root = document.querySelector(mountNode);
+
+  const { states = {}, ...restResolver } = initialResolver || {};
+  const globalStates = window.__BRBN_STORE;
+
+  // route-level state
+  const proxiedRouteStates = new Proxy(structuredClone(states), {
+    set: (obj, prop, value) => {
+      const prevValue = obj[prop];
+
+      obj[prop] = value;
+
+      if (prevValue !== value) {
+        renderPage(restResolver, proxiedRouteStates, globalStates, root);
+      }
+      return true;
+    },
+  });
+
+  // modifying global state
+  window.addEventListener(STORE_EVENT_SUBSCRIBER_NAME, (event) => {
+    renderPage(restResolver, proxiedRouteStates, globalStates, root);
+  });
+
+  if (typeof initialResolver === "object") {
+    renderPage(restResolver, proxiedRouteStates, globalStates, root);
+
+    return;
+  }
+
+  renderPage(
+    { render: () => `<div><h1>404</h1></div>` },
+    proxiedRouteStates,
+    globalStates,
+    root
+  );
+};
+
+export const initRouter = ({ mountNode }) => {
   // get initial path
   const path = window.location.pathname;
 
-  renderRoute(resolveRoute(path));
+  renderRoute(resolveRoute(path), mountNode);
 
   window.addEventListener("popstate", () => {
     const path = window.location.pathname;
 
-    renderRoute(resolveRoute(path));
+    renderRoute(resolveRoute(path), mountNode);
   });
 
   window.addEventListener(ROUTER_RENDER_SUBCRIBER_NAME, (event) => {
-    renderRoute(resolveRoute(event.detail.path));
+    renderRoute(resolveRoute(event.detail.path), mountNode);
   });
+};
+
+export const routerActions = {
+  push: (path) => {
+    window.history.pushState({}, "", path);
+    window.dispatchEvent(
+      new CustomEvent(ROUTER_RENDER_SUBCRIBER_NAME, {
+        detail: { path },
+      })
+    );
+  },
+  replace: (path) => {
+    window.history.replaceState({}, "", path);
+    window.dispatchEvent(
+      new CustomEvent(ROUTER_RENDER_SUBCRIBER_NAME, {
+        detail: { path },
+      })
+    );
+  },
+  back: () => {
+    window.history.back();
+  },
 };

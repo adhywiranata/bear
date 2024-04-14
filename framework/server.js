@@ -1,7 +1,7 @@
 import { SSR_PERSISTOR_SCRIPT_ID } from "./constants.js";
-import { resolveRoute } from "./routeHandler.js";
+import { resolveRoute } from "./router.js";
 
-export const getStringifiedApp = (path) => {
+export const renderToHTMLString = (path) => {
   const resolver = resolveRoute(path) || {};
 
   const { getServerSideStates, render, routeParams } = resolver;
@@ -20,8 +20,10 @@ export const getStringifiedApp = (path) => {
 };
 
 const withServerStatePersistor = (htmlStr) => (serverStates) => {
-  const serverStatesAsScript = `<script id="${SSR_PERSISTOR_SCRIPT_ID}" type="application/json">${JSON.stringify(
-    serverStates
-  )}</script>`;
+  const serverStatesAsScript = serverStates
+    ? `<script id="${SSR_PERSISTOR_SCRIPT_ID}" type="application/json">${JSON.stringify(
+        serverStates
+      )}</script>`
+    : "";
   return htmlStr + serverStatesAsScript;
 };

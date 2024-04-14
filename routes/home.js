@@ -1,8 +1,8 @@
 export const render = ({ router }) => {
-  console.log({ router });
+  const isPopupVisible = router?.hash["popup"];
 
   const popup = () => {
-    if (router?.hash["popup"]) {
+    if (isPopupVisible) {
       return "<div>POPUPPPP</div>";
     }
 
@@ -17,7 +17,11 @@ export const render = ({ router }) => {
       <button b-click="reduceCounter">Minus</button>
       <br /><br /><br />
       <button b-click="goToSearch">Go To Search Page</button>
-      <button b-click="openSpecialPopup">Open Special Popup</button>
+      ${
+        isPopupVisible
+          ? ""
+          : `<button b-click="openSpecialPopup">Open Special Popup</button>`
+      }
       ${popup()}
     </div>
   `;

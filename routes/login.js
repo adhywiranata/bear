@@ -1,4 +1,4 @@
-export const render = () => {
+export const render = ({}) => {
   return `
     <div id="login-page">
       <h2>Login</h2>

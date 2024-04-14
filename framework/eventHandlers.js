@@ -1,6 +1,6 @@
 const CLICK_MATCHER = "b-click";
 
-import { routerActions } from "./routerActions.js";
+import { routerActions } from "./router.js";
 
 export const resolveInternalHandlers = ({
   domToAttach,
