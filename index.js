@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 
-import { renderToHTMLString } from "./framework/server.js";
+import { renderToHTMLString } from "./app/framework/server.js";
 
 const bearFrameworkApp = express();
 const port = 3001;
