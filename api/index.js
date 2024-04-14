@@ -3,7 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import express from "express";
 
-import { renderToHTMLString } from "../app/framework/server.js";
+import { renderToHTMLString } from "./app/framework/server.js";
 
 const bearFrameworkApp = express();
 const port = 3001;
@@ -20,7 +20,7 @@ bearFrameworkApp.get("*", (req, res) => {
     "utf-8"
   );
 
-  if (req.path.startsWith("/favicon") || req.path.startsWith("/app")) {
+  if (req.path.startsWith("/favicon")) {
     return res.send("");
   }
 
