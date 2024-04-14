@@ -5,8 +5,8 @@
     "express": "^4.19.2"
   },
   "scripts": {
-    "dev": "nodemon app.server.js",
-    "start": "node app.server.js"
+    "dev": "nodemon app/app.server.js",
+    "start": "node app/app.server.js"
   },
   "name": "bearbone-app",
   "version": "1.0.0",

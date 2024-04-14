@@ -12,10 +12,7 @@ const __filename = fileURLToPath(import.meta.url); // get the resolved path to t
 const __dirname = path.dirname(__filename); // get the name of the directory
 
 // __bearframework__ is an abstract path which made to avoid conflicts with any of the page routes
-bearFrameworkApp.use(
-  "/__bearframework__/",
-  express.static(path.join(__dirname, "./"))
-);
+bearFrameworkApp.use("/", express.static(path.join(__dirname, "./")));
 
 bearFrameworkApp.get("*", (req, res) => {
   const htmlFile = fs.readFileSync(
