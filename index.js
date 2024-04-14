@@ -20,7 +20,7 @@ bearFrameworkApp.get("*", (req, res) => {
     "utf-8"
   );
 
-  if (req.path.startsWith("/favicon") || req.path.startsWith("/app")) {
+  if (req.path.startsWith("/favicon")) {
     return res.send("");
   }
 
