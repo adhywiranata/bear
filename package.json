@@ -7,8 +7,8 @@
     "hono": "^4.2.4"
   },
   "scripts": {
-    "dev": "nodemon index.js",
-    "start": "node index.js"
+    "dev": "nodemon ./servers/providers/node.js",
+    "start": "node ./servers/providers/node.js"
   },
   "name": "bearbone-app",
   "version": "1.0.0",

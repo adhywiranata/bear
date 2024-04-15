@@ -2,7 +2,6 @@ import { SSR_PERSISTOR_SCRIPT_ID } from "./constants.js";
 import { resolveRoute } from "./router.js";
 
 export const renderToHTMLString = (path) => {
-  console.log({ path });
   const resolver = resolveRoute(path) || {};
 
   const { getServerSideStates, render, routeParams } = resolver;

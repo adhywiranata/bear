@@ -1,39 +1,29 @@
-import fs from "fs";
-import path from "path";
-import { fileURLToPath } from "url";
-import express from "express";
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { serveStatic } from "@hono/node-server/serve-static";
+import { handle } from "@hono/node-server/vercel";
 
 import { renderToHTMLString } from "./app/framework/server.js";
+import { htmlShell } from "./servers/template.js";
 
-const bearFrameworkApp = express();
-const port = 3000;
+const app = new Hono();
 
-const __filename = fileURLToPath(import.meta.url); // get the resolved path to the file
-const __dirname = path.dirname(__filename); // get the name of the directory
-
-// __bearframework__ is an abstract path which made to avoid conflicts with any of the page routes
-bearFrameworkApp.use("/", express.static(path.join(__dirname, "./")));
-
-bearFrameworkApp.get("*", (req, res) => {
-  const htmlFile = fs.readFileSync(
-    path.join(__dirname, "./index.html"),
-    "utf-8"
-  );
-
-  if (req.path.startsWith("/favicon")) {
-    return res.send("");
+app.use("/app/*", serveStatic({ root: "./" }));
+app.get("*", (c) => {
+  if (c.req.path.includes("favicon") || c.req.path.includes("/app/")) {
+    c.header("X-Bear-Framework", "Non SSR Page");
+    return c.text("Ok");
   }
 
-  const stringifiedApp = htmlFile.replace(
+  const stringifiedApp = htmlShell().replace(
     "<main></main>",
-    `<main>${renderToHTMLString(req.url)}</main>`
+    `<main>${renderToHTMLString(c.req.path)}</main>`
   );
 
-  res.send(stringifiedApp);
+  c.header("X-Bear-Framework", "Yes");
+  return c.html(stringifiedApp);
 });
 
-bearFrameworkApp.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
-});
+serve(app);
 
-export default bearFrameworkApp;
+export default handle(app);
