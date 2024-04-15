@@ -4,11 +4,11 @@ import { handle } from "@hono/node-server/vercel";
 
 import { renderServerRoute } from "../handlers.js";
 
-export const confif = {
+export const config = {
   runtime: "edge",
 };
 
-const app = new Hono().basePath("/api");
+const app = new Hono().basePath("/");
 
 app.use("/app/*", serveStatic({ root: "./" }));
 app.get("*", (c) => {
