@@ -5,7 +5,9 @@ import { handle } from "@hono/node-server/vercel";
 import { renderServerRoute } from "../handlers.js";
 
 export const config = {
-  runtime: "edge",
+  api: {
+    bodyParser: false,
+  },
 };
 
 const app = new Hono().basePath("/");
