@@ -2,11 +2,13 @@
   "type": "module",
   "main": "app.server.js",
   "dependencies": {
-    "express": "^4.19.2"
+    "@hono/node-server": "^1.10.0",
+    "express": "^4.19.2",
+    "hono": "^4.2.4"
   },
   "scripts": {
-    "dev": "nodemon api/index.js",
-    "start": "node api/index.js"
+    "dev": "nodemon index.js",
+    "start": "node index.js"
   },
   "name": "bearbone-app",
   "version": "1.0.0",
