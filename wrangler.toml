@@ -1,2 +1,3 @@
 [vars]
 MY_NAME = "Bear"
+pages_build_output_dir=app
