@@ -1,2 +1,2 @@
 name = "bear-fw"
-pages_build_output_dir = "./app"
+pages_build_output_dir = "./"
