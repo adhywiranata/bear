@@ -1,6 +1,8 @@
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import { serveStatic } from "@hono/node-server/serve-static";
+import { handle } from "@hono/node-server/vercel";
+
 import { renderToHTMLString } from "./app/framework/server.js";
 import { htmlShell } from "./template.js";
 
@@ -25,4 +27,4 @@ app.get("*", (c) => {
 
 serve(app);
 
-export default app;
+export default handle(app);
